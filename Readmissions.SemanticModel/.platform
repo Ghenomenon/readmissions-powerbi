@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "Readmissions"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "6800bf61-8bbf-431b-ace2-2f42363b904f"
+  }
+}

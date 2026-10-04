@@ -1,0 +1,43 @@
+table Scenario
+	lineageTag: 495a6d68-6226-47df-95e0-bd9376afdec7
+
+	column Scenario
+		dataType: string
+		lineageTag: b5a2826c-94f4-4935-80a4-f3e1f8aac0b1
+		summarizeBy: none
+		sourceColumn: Scenario
+
+	column FollowUpCost
+		dataType: double
+		formatString: $#,##0
+		lineageTag: ee00010f-7c40-4508-81f8-ab32d229e82f
+		summarizeBy: none
+		sourceColumn: FollowUpCost
+
+	column PreventionRate
+		dataType: double
+		formatString: 0%
+		lineageTag: 81e1f898-1062-4568-9a3f-ff81457a6a90
+		summarizeBy: none
+		sourceColumn: PreventionRate
+
+	column AvoidedCost
+		dataType: double
+		formatString: $#,##0
+		lineageTag: 776aeb45-493c-48b2-b3a0-673495c0ecba
+		summarizeBy: none
+		sourceColumn: AvoidedCost
+
+	partition Scenario = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\Scenario.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Headers = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Clean = Table.ReplaceValue(Headers, "", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),
+				    Typed = Table.TransformColumnTypes(Clean, {{"Scenario", type text}, {"FollowUpCost", type number}, {"PreventionRate", type number}, {"AvoidedCost", type number}}, "en-US")
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
+

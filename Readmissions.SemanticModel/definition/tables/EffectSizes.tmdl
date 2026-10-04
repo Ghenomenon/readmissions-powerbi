@@ -1,0 +1,52 @@
+table EffectSizes
+	lineageTag: 8c2f432b-a5ad-4a19-9f14-1eb08276adcf
+
+	column factor
+		dataType: string
+		lineageTag: 523758a7-68d6-4539-8201-b2d8e4d809fe
+		summarizeBy: none
+		sourceColumn: factor
+
+	column chi2
+		dataType: double
+		lineageTag: a741a85a-1523-4ffe-967e-71cbb09637e6
+		summarizeBy: none
+		sourceColumn: chi2
+
+	column dof
+		dataType: double
+		lineageTag: ba580f18-e677-4806-b19c-a511213f3f10
+		summarizeBy: none
+		sourceColumn: dof
+
+	column p_value
+		dataType: double
+		lineageTag: 68d4f8aa-2b4e-40ed-a6b5-b7579740c1bc
+		summarizeBy: none
+		sourceColumn: p_value
+
+	column cramers_v
+		dataType: double
+		lineageTag: 3e8bf9d1-de8a-4635-925f-d832b947f7fa
+		summarizeBy: none
+		sourceColumn: cramers_v
+
+	column p_fdr
+		dataType: double
+		lineageTag: 883db5d6-80a4-4caa-944d-e4a2e646db67
+		summarizeBy: none
+		sourceColumn: p_fdr
+
+	partition EffectSizes = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\EffectSizes.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Headers = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Clean = Table.ReplaceValue(Headers, "", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),
+				    Typed = Table.TransformColumnTypes(Clean, {{"factor", type text}, {"chi2", type number}, {"dof", type number}, {"p_value", type number}, {"cramers_v", type number}, {"p_fdr", type number}}, "en-US")
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
+

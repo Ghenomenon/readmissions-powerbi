@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "name": "cohort",
+  "position": {
+    "x": 24,
+    "y": 298,
+    "width": 1232,
+    "height": 130,
+    "z": 0,
+    "tabOrder": 3
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Cohort: 69,987 patients, one lowest-ID eligible encounter each. Death and hospice discharges were excluded. The source has no admission dates, so the index record is not asserted to be the chronologically first admission. Readmission means the source readmitted value is <30. It does not establish preventability or an exact NHS emergency-readmission definition.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "14pt",
+                      "color": "#172C45"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

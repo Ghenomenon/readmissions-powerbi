@@ -1,0 +1,13 @@
+{
+  "name": "Readmissions",
+  "dataColors": [
+    "#005EB8",
+    "#ED8B00",
+    "#70869B",
+    "#1D8A83",
+    "#8767A8"
+  ],
+  "background": "#F3F6FA",
+  "foreground": "#172C45",
+  "tableAccent": "#005EB8"
+}

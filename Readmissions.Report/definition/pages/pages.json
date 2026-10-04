@@ -1,0 +1,13 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/pagesMetadata/1.1.0/schema.json",
+  "pageOrder": [
+    "01overview",
+    "02patterns",
+    "03validation",
+    "04capacity",
+    "05fairness",
+    "06economics",
+    "07sources"
+  ],
+  "activePageName": "01overview"
+}

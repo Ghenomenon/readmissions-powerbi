@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "name": "economics_note",
+  "position": {
+    "x": 24,
+    "y": 775,
+    "width": 1232,
+    "height": 60,
+    "z": 0,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Avoided accounting costs are not guaranteed cash savings. Setup, technology, administration and additional capacity costs are excluded. Follow-up cost uses planned capacity; score ties may add small workload.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "12pt",
+                      "color": "#172C45"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

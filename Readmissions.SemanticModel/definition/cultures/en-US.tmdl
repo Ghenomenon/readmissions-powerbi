@@ -1,0 +1,32 @@
+cultureInfo en-US
+
+	linguisticMetadata =
+			{
+			  "Version": "2.0.0",
+			  "Language": "en-US",
+			  "Entities": {
+			    "oddsratios.feature": {
+			      "Definition": {
+			        "Binding": {
+			          "ConceptualEntity": "OddsRatios",
+			          "ConceptualProperty": "feature"
+			        }
+			      },
+			      "State": "Generated",
+			      "Terms": [
+			        {
+			          "Adjusted factor": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        }
+			      ]
+			    }
+			  }
+			}
+		contentType: json
+

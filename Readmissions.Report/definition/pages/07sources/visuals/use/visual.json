@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.1.0/schema.json",
+  "name": "use",
+  "position": {
+    "x": 24,
+    "y": 730,
+    "width": 1232,
+    "height": 125,
+    "z": 0,
+    "tabOrder": 6
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Use: Meridian and its stakeholder discovery exercise are fictional. No real stakeholder interviews took place. This is a retrospective portfolio prototype, not clinically validated or approved for patient-care decisions. Real use needs current local data, clinical validation, information-governance, equality/fairness and clinical-safety review, with assessment of applicable medical-device requirements.",
+                    "textStyle": {
+                      "fontFamily": "Segoe UI",
+                      "fontSize": "14pt",
+                      "color": "#172C45"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

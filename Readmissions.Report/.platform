@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "Readmissions"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "d90c8d2e-fb99-4a83-ad75-63e54d4792a8"
+  }
+}

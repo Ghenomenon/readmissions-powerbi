@@ -1,0 +1,447 @@
+table Patients
+	lineageTag: 49b84ed8-dae9-450c-aacf-2fff7b0dd2c0
+
+	measure Patients = COUNTROWS(Patients)
+		formatString: #,##0
+		displayFolder: Cohort
+		lineageTag: ce76a5ab-8aa0-4eae-aa01-ab589a6622cb
+
+	measure Readmissions = SUM(Patients[Readmitted])
+		formatString: #,##0
+		displayFolder: Cohort
+		lineageTag: b6068d44-af33-421a-9402-b448b4741954
+
+	measure 'Readmission rate' = DIVIDE([Readmissions], [Patients])
+		formatString: 0.0%
+		displayFolder: Cohort
+		lineageTag: a6860b54-8f1f-4a1d-9c2f-81c98d729a3b
+
+	measure 'Median stay' = MEDIAN(Patients[LengthOfStay])
+		formatString: 0.0 "days"
+		displayFolder: Cohort
+		lineageTag: 2f419b93-b62c-4abe-af6d-c729afcadd04
+
+	measure 'HbA1c testing rate' = AVERAGE(Patients[HbA1cTested])
+		formatString: 0.0%
+		displayFolder: Cohort
+		lineageTag: 3410bd20-ee3c-4cc9-ab4e-e008320c2663
+
+	measure 'Test patients' = CALCULATE(COUNTROWS(Patients), Patients[IsTest] = 1)
+		formatString: #,##0
+		displayFolder: Test cohort
+		lineageTag: 74ed3dbc-4f73-442d-8b49-932d15986844
+
+	measure 'Test readmissions' = CALCULATE(SUM(Patients[Readmitted]), Patients[IsTest] = 1)
+		formatString: #,##0
+		displayFolder: Test cohort
+		lineageTag: 77976c97-0b8d-4113-96de-7ede418dd806
+
+	measure 'Test readmission rate' = DIVIDE([Test readmissions], [Test patients])
+		formatString: 0.0%
+		displayFolder: Test cohort
+		lineageTag: 3949b80c-ca03-4ad9-ae81-da66a2c4cf27
+
+	measure 'Mean predicted risk' = CALCULATE(AVERAGE(Patients[RiskScore]), Patients[IsTest] = 1)
+		formatString: 0.0%
+		displayFolder: Test cohort
+		lineageTag: 44ca2df5-cce3-4861-b970-ebaad8261d30
+
+	measure 'Selected capacity' = SELECTEDVALUE(Capacity[Share], 0.20)
+		formatString: 0.0%
+		displayFolder: Capacity
+		lineageTag: c2e24040-8de2-4dfc-901f-83c3d8b30707
+
+	measure 'Risk threshold' =
+			// One common threshold set on all test patients, so slicers and visual groups do not move it
+			VAR Pool = CALCULATETABLE(Patients, REMOVEFILTERS(Patients), Patients[IsTest] = 1)
+			RETURN IF(COUNTROWS(Pool) = 0, BLANK(), PERCENTILEX.INC(Pool, Patients[RiskScore], 1 - [Selected capacity]))
+		formatString: 0.0%
+		displayFolder: Capacity
+		lineageTag: f91f8217-b4b6-411d-80f2-4c540d19c620
+
+	measure 'Flagged patients' =
+			VAR Cut = [Risk threshold]
+			RETURN IF(ISBLANK(Cut), BLANK(), CALCULATE(COUNTROWS(Patients), KEEPFILTERS(Patients[IsTest] = 1), KEEPFILTERS(Patients[RiskScore] >= Cut)))
+		formatString: #,##0
+		displayFolder: Capacity
+		lineageTag: 06f40fa0-f7d3-4b20-a98b-9f2edc4a833e
+
+	measure 'Captured readmissions' =
+			VAR Cut = [Risk threshold]
+			RETURN IF(ISBLANK(Cut), BLANK(), CALCULATE(SUM(Patients[Readmitted]), KEEPFILTERS(Patients[IsTest] = 1), KEEPFILTERS(Patients[RiskScore] >= Cut)))
+		formatString: #,##0
+		displayFolder: Capacity
+		lineageTag: 0cfc2463-a182-452e-8b79-b2a9b3172e03
+
+	measure Recall = DIVIDE([Captured readmissions], [Test readmissions])
+		formatString: 0.0%
+		displayFolder: Capacity
+		lineageTag: 407c2a99-4b08-4d25-b783-f5829a50d1d0
+
+	measure Precision = DIVIDE([Captured readmissions], [Flagged patients])
+		formatString: 0.0%
+		displayFolder: Capacity
+		lineageTag: ff5034ef-cfcb-40b8-a65a-3bb08ea1383c
+
+	measure 'Flagged share' = DIVIDE([Flagged patients], [Test patients])
+		formatString: 0.0%
+		displayFolder: Capacity
+		lineageTag: af7855c9-dcd0-4524-9606-f883e711d52f
+
+	measure Lift = DIVIDE([Precision], [Test readmission rate])
+		formatString: 0.00"x"
+		displayFolder: Capacity
+		lineageTag: 8cf900cb-f0c7-4bb8-9238-f354e61bc7dd
+
+	measure 'False positives' = [Flagged patients] - [Captured readmissions]
+		formatString: #,##0
+		displayFolder: Capacity
+		lineageTag: 658f3e85-15aa-4113-bf2f-33a01ca5bb82
+
+	measure 'False negatives' = [Test readmissions] - [Captured readmissions]
+		formatString: #,##0
+		displayFolder: Capacity
+		lineageTag: eee9e730-42b8-4b98-88f6-d16672ff392f
+
+	measure 'True negatives' = [Test patients] - [Test readmissions] - [False positives]
+		formatString: #,##0
+		displayFolder: Capacity
+		lineageTag: 062fa6a0-5493-4da3-ad81-5ed7312ab9a1
+
+	measure 'False positive rate' = DIVIDE([False positives], [Test patients] - [Test readmissions])
+		formatString: 0.0%
+		displayFolder: Capacity
+		lineageTag: aa261fc4-31ec-4ab8-a1fa-289ff36312e9
+
+	measure 'Recall at capacity' =
+			VAR Share = SELECTEDVALUE(CapacityAxis[Share])
+			VAR Pool = FILTER(ALLSELECTED(Patients), Patients[IsTest] = 1)
+			VAR AllTest = CALCULATETABLE(Patients, REMOVEFILTERS(Patients), Patients[IsTest] = 1)
+			VAR Cut = IF(COUNTROWS(Pool) > 0, PERCENTILEX.INC(AllTest, Patients[RiskScore], 1 - Share))
+			VAR Chosen = FILTER(Pool, NOT ISBLANK(Cut) && Patients[RiskScore] >= Cut)
+			RETURN DIVIDE(SUMX(Chosen, Patients[Readmitted]), SUMX(Pool, Patients[Readmitted]))
+		formatString: 0.0%
+		displayFolder: Capacity
+		lineageTag: b484fba6-ba37-4d05-b06b-e4a86a8895a5
+
+	measure 'Precision at capacity' =
+			VAR Share = SELECTEDVALUE(CapacityAxis[Share])
+			VAR Pool = FILTER(ALLSELECTED(Patients), Patients[IsTest] = 1)
+			VAR AllTest = CALCULATETABLE(Patients, REMOVEFILTERS(Patients), Patients[IsTest] = 1)
+			VAR Cut = IF(COUNTROWS(Pool) > 0, PERCENTILEX.INC(AllTest, Patients[RiskScore], 1 - Share))
+			VAR Chosen = FILTER(Pool, NOT ISBLANK(Cut) && Patients[RiskScore] >= Cut)
+			RETURN DIVIDE(SUMX(Chosen, Patients[Readmitted]), COUNTROWS(Chosen))
+		formatString: 0.0%
+		displayFolder: Capacity
+		lineageTag: 58865f9c-70ac-4ae5-b87d-0b583bfb8231
+
+	measure 'Recall CI low' =
+			VAR N = [Test readmissions]
+			VAR P = [Recall]
+			VAR Z = 1.96
+			RETURN IF(N > 0, DIVIDE(P + Z*Z/(2*N) - Z*SQRT(P*(1-P)/N + Z*Z/(4*N*N)), 1 + Z*Z/N))
+		formatString: 0.0%
+		displayFolder: Fairness
+		lineageTag: 9f133e10-8b95-4e11-a76f-ebd7564b8d56
+
+	measure 'Recall CI high' =
+			VAR N = [Test readmissions]
+			VAR P = [Recall]
+			VAR Z = 1.96
+			RETURN IF(N > 0, DIVIDE(P + Z*Z/(2*N) + Z*SQRT(P*(1-P)/N + Z*Z/(4*N*N)), 1 + Z*Z/N))
+		formatString: 0.0%
+		displayFolder: Fairness
+		lineageTag: 226c12a5-286b-4925-a42b-db3c4dfb759e
+
+	measure 'Recall interval' = IF([Test readmissions] > 0, FORMAT([Recall], "0.0%") & " (" & FORMAT([Recall CI low], "0.0%") & "-" & FORMAT([Recall CI high], "0.0%") & ")", "No observed readmissions")
+		displayFolder: Fairness
+		lineageTag: 0bc100ce-cbbe-43b4-8cf0-6fd8915d83d1
+
+	measure 'Follow-up cost' = SELECTEDVALUE(Scenario[FollowUpCost], 100)
+		formatString: $#,##0
+		displayFolder: Economics
+		lineageTag: c11d5d8e-efec-4be9-92dc-4c3a6a723ed1
+
+	measure 'Prevention assumption' = SELECTEDVALUE(Scenario[PreventionRate], 0.10)
+		formatString: 0.0%
+		displayFolder: Economics
+		lineageTag: 19831f65-f383-4869-ab55-627f4b98b126
+
+	measure 'Avoided cost assumption' = SELECTEDVALUE(Scenario[AvoidedCost], 12500)
+		formatString: $#,##0
+		displayFolder: Economics
+		lineageTag: 270c18b0-0069-422f-a57e-212295d1c1fa
+
+	measure 'Follow-ups per 1000' = IF([Test patients] > 0, 1000 * [Selected capacity])
+		formatString: 0
+		displayFolder: Economics
+		lineageTag: 746e9855-2c9a-4350-b66c-24fbd6ca5f5d
+
+	measure 'Readmissions in group per 1000' = 1000 * DIVIDE([Captured readmissions], [Test patients])
+		formatString: 0.0
+		displayFolder: Economics
+		lineageTag: 9cdeac42-bcc1-42aa-acd7-c3203ed19480
+
+	measure 'Expected prevented per 1000' = [Readmissions in group per 1000] * [Prevention assumption]
+		formatString: 0.0
+		displayFolder: Economics
+		lineageTag: c2a9e868-1542-448c-bd89-c9c78bf10ef6
+
+	measure 'Programme cost per 1000' = [Follow-ups per 1000] * [Follow-up cost]
+		formatString: $#,##0
+		displayFolder: Economics
+		lineageTag: c2ffb114-523e-427c-8be8-370f7fac3019
+
+	measure 'Gross avoided cost per 1000' = [Expected prevented per 1000] * [Avoided cost assumption]
+		formatString: $#,##0
+		displayFolder: Economics
+		lineageTag: 966f52e8-0f20-47ab-af33-0513d5bc0d2e
+
+	measure 'Net benefit per 1000' = IF([Test patients] > 0, [Gross avoided cost per 1000] - [Programme cost per 1000])
+		formatString: $#,##0;($#,##0)
+		displayFolder: Economics
+		lineageTag: c6f1b832-7759-4d28-974e-26739317cd4f
+
+	measure 'Break-even prevention' = DIVIDE([Programme cost per 1000], [Readmissions in group per 1000] * [Avoided cost assumption])
+		formatString: 0.0%
+		displayFolder: Economics
+		lineageTag: 1fb2adee-9646-4151-b5ce-68776c7adeb3
+
+	measure 'Cost per prevented readmission' = DIVIDE([Programme cost per 1000], [Expected prevented per 1000])
+		formatString: $#,##0
+		displayFolder: Economics
+		lineageTag: 690aa2e0-7418-4c22-be56-815747bf48a7
+
+	measure 'Net benefit at capacity' =
+			VAR Share = SELECTEDVALUE(CapacityAxis[Share])
+			VAR Pool = FILTER(ALLSELECTED(Patients), Patients[IsTest] = 1)
+			VAR AllTest = CALCULATETABLE(Patients, REMOVEFILTERS(Patients), Patients[IsTest] = 1)
+			VAR Cut = IF(COUNTROWS(Pool) > 0, PERCENTILEX.INC(AllTest, Patients[RiskScore], 1 - Share))
+			VAR Chosen = FILTER(Pool, NOT ISBLANK(Cut) && Patients[RiskScore] >= Cut)
+			VAR Captured = SUMX(Chosen, Patients[Readmitted])
+			RETURN IF(COUNTROWS(Pool) > 0, 1000 * DIVIDE(Captured, COUNTROWS(Pool)) * [Prevention assumption] * [Avoided cost assumption] - 1000 * Share * [Follow-up cost])
+		formatString: $#,##0
+		displayFolder: Economics
+		lineageTag: d513e37c-6373-4eda-b854-d35e6a51e6b9
+
+	measure 'Full-test AUC' = CALCULATE(MAX(ModelMetrics[value]), ModelMetrics[metric] = "AUC-ROC")
+		formatString: 0.000
+		displayFolder: Fixed validation
+		lineageTag: ec48230d-2376-4190-9486-c80209bfd1ac
+
+	measure 'Full-test AP' = CALCULATE(MAX(ModelMetrics[value]), ModelMetrics[metric] = "PR-AUC (average precision)")
+		formatString: 0.000
+		displayFolder: Fixed validation
+		lineageTag: 1f702333-01ff-4455-9bce-ac6756fe2d1c
+
+	measure 'Full-test Brier' = CALCULATE(MAX(ModelMetrics[value]), ModelMetrics[metric] = "Brier score")
+		formatString: 0.000
+		displayFolder: Fixed validation
+		lineageTag: 288dc7bb-e27f-4d24-810f-6d9d803088c9
+
+	measure 'Full-test Brier skill' = CALCULATE(MAX(ModelMetrics[value]), ModelMetrics[metric] = "Brier skill score")
+		formatString: 0.000
+		displayFolder: Fixed validation
+		lineageTag: 7096e09e-1ba9-4795-91fc-416e6577649c
+
+	measure 'Odds ratio' = MAX(OddsRatios[odds_ratio])
+		formatString: 0.00
+		displayFolder: Fixed associations
+		lineageTag: cd74a854-f68d-46a0-b411-5da7552402fd
+
+	measure 'OR CI low' = MAX(OddsRatios[ci_low])
+		formatString: 0.00
+		displayFolder: Fixed associations
+		lineageTag: 4ca0a869-4805-485d-b8be-51f8b223fe98
+
+	measure 'OR CI high' = MAX(OddsRatios[ci_high])
+		formatString: 0.00
+		displayFolder: Fixed associations
+		lineageTag: b93f7824-ffc0-42b3-afcf-eac979e5bcbc
+
+	measure 'Cramer V' = MAX(EffectSizes[cramers_v])
+		formatString: 0.000
+		displayFolder: Fixed associations
+		lineageTag: f9affc8e-8fe7-40ed-8d7e-e866b233e9ea
+
+	measure 'ROC sensitivity' = MAX(ROC[TPR])
+		formatString: 0.0%
+		displayFolder: Fixed validation
+		lineageTag: 2190fb82-d0fb-477e-80e8-bd186de5df9e
+
+	measure 'Net benefit by scenario' =
+			VAR FollowCost = SELECTEDVALUE(ScenarioAxis[FollowUpCost])
+			VAR Prevent = SELECTEDVALUE(ScenarioAxis[PreventionRate])
+			VAR Avoid = SELECTEDVALUE(ScenarioAxis[AvoidedCost])
+			RETURN IF([Test patients] > 0, [Readmissions in group per 1000] * Prevent * Avoid - [Follow-ups per 1000] * FollowCost)
+		formatString: $#,##0;($#,##0)
+		displayFolder: Economics
+		lineageTag: 960dc06b-e1f2-4272-b2fd-aea9903d1abb
+
+	measure 'Random selection' = SELECTEDVALUE(CapacityAxis[Share])
+		formatString: 0.0%
+		displayFolder: Capacity
+		lineageTag: 2779ec9d-88f8-421e-8085-aa15fcc637f8
+
+	measure 'Chance line' = SELECTEDVALUE(ROC[FPR])
+		formatString: 0.0%
+		displayFolder: Fixed validation
+		lineageTag: 4a59a800-9246-40a2-af98-9649e40039db
+
+	column RowKey
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: d28097d0-307c-4a44-8dfe-9861a2bef82d
+		summarizeBy: none
+		sourceColumn: RowKey
+
+	column AgeBand
+		dataType: string
+		lineageTag: 60fd3efa-6107-4a73-b5a6-e17c52d660ff
+		summarizeBy: none
+		sourceColumn: AgeBand
+		sortByColumn: AgeOrder
+
+	column AgeOrder
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 9f5031c2-29ec-4f6d-9c27-38f587ae0741
+		summarizeBy: none
+		sourceColumn: AgeOrder
+
+	column AgeGroup
+		dataType: string
+		lineageTag: e3306bd8-c963-4d2c-bb03-76b400181d76
+		summarizeBy: none
+		sourceColumn: AgeGroup
+		sortByColumn: AgeGroupOrder
+
+	column AgeGroupOrder
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 0040c3ef-22d7-4279-993e-bbce30de5ac5
+		summarizeBy: none
+		sourceColumn: AgeGroupOrder
+
+	column Gender
+		dataType: string
+		lineageTag: 9a924011-7153-4c45-99db-43bfa5b09078
+		summarizeBy: none
+		sourceColumn: Gender
+
+	column Race
+		dataType: string
+		lineageTag: 29704792-442c-4536-8379-36143468749d
+		summarizeBy: none
+		sourceColumn: Race
+
+	column Discharge
+		dataType: string
+		lineageTag: 1ce028a4-b593-4c36-9cf8-475971afb45f
+		summarizeBy: none
+		sourceColumn: Discharge
+
+	column Diagnosis
+		dataType: string
+		lineageTag: fb2f2451-64d6-42f5-9dd6-81d4e6dc215c
+		summarizeBy: none
+		sourceColumn: Diagnosis
+
+	column AdmissionType
+		dataType: string
+		lineageTag: bed13c0f-02f5-4bd3-aeda-c08cfc4a1cd4
+		summarizeBy: none
+		sourceColumn: AdmissionType
+
+	column LengthOfStay
+		dataType: int64
+		formatString: 0
+		lineageTag: 77614624-6adc-4f62-992c-186372d20f8e
+		summarizeBy: none
+		sourceColumn: LengthOfStay
+
+	column LOSGroup
+		dataType: string
+		lineageTag: 9a22991e-50f0-4d8b-83e6-25265c50ded9
+		summarizeBy: none
+		sourceColumn: LOSGroup
+
+	column PriorInpatient
+		dataType: int64
+		formatString: 0
+		lineageTag: 50dfdfe7-1f0a-40fb-a6b6-ab41a0875989
+		summarizeBy: none
+		sourceColumn: PriorInpatient
+
+	column PriorGroup
+		dataType: string
+		lineageTag: 1f9dba7e-625a-4b20-86bc-c8b349cfe324
+		summarizeBy: none
+		sourceColumn: PriorGroup
+
+	column HbA1cTested
+		dataType: int64
+		formatString: 0
+		lineageTag: fc384b01-9b69-418a-b7c0-892f1acbb967
+		summarizeBy: none
+		sourceColumn: HbA1cTested
+
+	column HbA1cStatus
+		dataType: string
+		lineageTag: 00171b6b-445a-450b-bfcc-cc38a5b84058
+		summarizeBy: none
+		sourceColumn: HbA1cStatus
+
+	column Readmitted
+		dataType: int64
+		formatString: 0
+		lineageTag: 78517e65-9aea-444b-ab77-66837113182a
+		summarizeBy: none
+		sourceColumn: Readmitted
+
+	column IsTest
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 7cdbb11c-a2a5-4f4e-b6df-8adf2381644a
+		summarizeBy: none
+		sourceColumn: IsTest
+
+	column RiskScore
+		dataType: double
+		formatString: 0.0%
+		lineageTag: 07e6f73e-dc8c-494e-b5ab-ddfe4c6ebaf9
+		summarizeBy: none
+		sourceColumn: RiskScore
+
+	column RiskDecile
+		dataType: int64
+		formatString: 0
+		lineageTag: 3ee19373-af37-45ae-87ac-ae19d3cc9af7
+		summarizeBy: none
+		sourceColumn: RiskDecile
+
+	column ReferenceFlag20
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 04f5ad00-166c-412f-879c-69def90850db
+		summarizeBy: none
+		sourceColumn: ReferenceFlag20
+
+	partition Patients = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\patients.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Headers = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Clean = Table.ReplaceValue(Headers, "", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),
+				    Typed = Table.TransformColumnTypes(Clean, {{"RowKey", Int64.Type}, {"AgeBand", type text}, {"AgeOrder", Int64.Type}, {"AgeGroup", type text}, {"AgeGroupOrder", Int64.Type}, {"Gender", type text}, {"Race", type text}, {"Discharge", type text}, {"Diagnosis", type text}, {"AdmissionType", type text}, {"LengthOfStay", Int64.Type}, {"LOSGroup", type text}, {"PriorInpatient", Int64.Type}, {"PriorGroup", type text}, {"HbA1cTested", Int64.Type}, {"HbA1cStatus", type text}, {"Readmitted", Int64.Type}, {"IsTest", Int64.Type}, {"RiskScore", type number}, {"RiskDecile", Int64.Type}, {"ReferenceFlag20", Int64.Type}}, "en-US")
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
+

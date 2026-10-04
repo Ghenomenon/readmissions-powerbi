@@ -1,0 +1,29 @@
+table ModelMetrics
+	lineageTag: 611f1aef-2d22-45dd-b0f8-fdd42400f1fd
+
+	column metric
+		dataType: string
+		lineageTag: 2272ca38-7cfb-45d7-a18b-1839988db50c
+		summarizeBy: none
+		sourceColumn: metric
+
+	column value
+		dataType: double
+		formatString: 0.000
+		lineageTag: 15397779-ff66-4c17-94ba-041863d0b438
+		summarizeBy: none
+		sourceColumn: value
+
+	partition ModelMetrics = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\ModelMetrics.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Headers = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Clean = Table.ReplaceValue(Headers, "", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),
+				    Typed = Table.TransformColumnTypes(Clean, {{"metric", type text}, {"value", type number}}, "en-US")
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
+

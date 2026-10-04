@@ -1,0 +1,23 @@
+table Capacity
+	lineageTag: 4f22dcf1-9320-4d08-a219-efce90a83137
+
+	column Share
+		dataType: double
+		formatString: 0%
+		lineageTag: b7e607aa-db17-462d-8c3e-f2101382fb26
+		summarizeBy: none
+		sourceColumn: Share
+
+	partition Capacity = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\Capacity.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Headers = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Clean = Table.ReplaceValue(Headers, "", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),
+				    Typed = Table.TransformColumnTypes(Clean, {{"Share", type number}}, "en-US")
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
+

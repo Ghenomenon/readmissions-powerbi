@@ -1,0 +1,52 @@
+table OddsRatios
+	lineageTag: 565461b2-bdb5-4fc4-b400-63fec70f3e19
+
+	column feature
+		dataType: string
+		lineageTag: a7fc1513-c09b-45e7-81d3-3661611729ee
+		summarizeBy: none
+		sourceColumn: feature
+
+	column coef
+		dataType: double
+		lineageTag: c92961a6-3ced-404d-848b-3d1813110744
+		summarizeBy: none
+		sourceColumn: coef
+
+	column odds_ratio
+		dataType: double
+		lineageTag: 352c437a-0830-4523-8c0e-076896e2b17c
+		summarizeBy: none
+		sourceColumn: odds_ratio
+
+	column ci_low
+		dataType: double
+		lineageTag: dbd9dd34-1f88-4f16-b5b8-b4e51154f9ad
+		summarizeBy: none
+		sourceColumn: ci_low
+
+	column ci_high
+		dataType: double
+		lineageTag: aea065c5-1023-47d9-a055-8243affe3ab4
+		summarizeBy: none
+		sourceColumn: ci_high
+
+	column p_value
+		dataType: double
+		lineageTag: 98968dfd-a484-4c2e-b981-53fdc6f9851b
+		summarizeBy: none
+		sourceColumn: p_value
+
+	partition OddsRatios = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\OddsRatios.csv"), [Delimiter=",", Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    Headers = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    Clean = Table.ReplaceValue(Headers, "", null, Replacer.ReplaceValue, Table.ColumnNames(Headers)),
+				    Typed = Table.TransformColumnTypes(Clean, {{"feature", type text}, {"coef", type number}, {"odds_ratio", type number}, {"ci_low", type number}, {"ci_high", type number}, {"p_value", type number}}, "en-US")
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table
+
